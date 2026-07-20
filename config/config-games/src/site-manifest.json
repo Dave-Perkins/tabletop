@@ -149,6 +149,14 @@
         "1.28.0",
         "1.27.0"
       ]
+    },
+    {
+      "gameId": "lowenherz",
+      "packageId": "lowenherz",
+      "logicVersion": "0.0.1",
+      "uiVersion": "0.0.1",
+      "priorLogicVersions": [],
+      "priorUiVersions": []
     }
   ]
 }
