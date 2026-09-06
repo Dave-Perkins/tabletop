@@ -5,8 +5,7 @@ import {
     GameAction,
     HydratableAction,
     MachineContext,
-    OffsetCoordinates,
-    sameCoordinates
+    OffsetCoordinates
 } from '@tabletop/common'
 import { HydratedSolGameState } from '../model/gameState.js'
 import { ActionType } from '../definition/actions.js'
@@ -16,7 +15,6 @@ import { Direction, Ring } from '../utils/solGraph.js'
 import { CARDS_DRAWN_PER_RING } from '../utils/solConstants.js'
 import { Hurl } from './hurl.js'
 import { Station } from '../components/stations.js'
-import { CENTER_COORDS } from '../components/gameBoard.js'
 
 export type FlyMetadata = Type.Static<typeof FlyMetadata>
 export const FlyMetadata = Type.Object({
@@ -313,7 +311,8 @@ export class HydratedFly extends HydratableAction<typeof Fly> implements Fly {
                 destination: flyOrHurl.destination,
                 cluster: flyOrHurl.cluster,
                 juggernaut: flyOrHurl.stationId !== undefined,
-                catapult: flyOrHurl.catapult
+                catapult: flyOrHurl.catapult,
+                hurling: flyOrHurl.type === ActionType.Hurl
             })
         ) {
             return
@@ -358,7 +357,8 @@ export class HydratedFly extends HydratableAction<typeof Fly> implements Fly {
         destination,
         cluster = false,
         juggernaut = false,
-        catapult = false
+        catapult = false,
+        hurling = false
     }: {
         state: HydratedSolGameState
         playerId: string
@@ -368,6 +368,7 @@ export class HydratedFly extends HydratableAction<typeof Fly> implements Fly {
         cluster?: boolean
         juggernaut?: boolean
         catapult?: boolean
+        hurling?: boolean
     }): boolean {
         const playerState = state.getPlayerState(playerId)
 
@@ -375,7 +376,6 @@ export class HydratedFly extends HydratableAction<typeof Fly> implements Fly {
             return this.isValidPuncture({ state, playerId, numSundivers, start, destination })
         }
 
-        const hurling = sameCoordinates(destination, CENTER_COORDS)
         if (juggernaut && !hurling && !state.board.canAddStationToCell(destination)) {
             return false
         } else if (

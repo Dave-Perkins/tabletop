@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { HydratedHurl, Hurl } from './hurl.js'
+import { Fly, HydratedFly } from './fly.js'
 import { createActionBase, createTestGameState } from '../utils/testUtils.js'
 import { CENTER_COORDS } from '../components/gameBoard.js'
 import { EffectType } from '../components/effects.js'
@@ -46,6 +47,27 @@ function hurlFromCore(
         gates: [],
         start: CORE_COORDS,
         destination: CENTER_COORDS,
+        cluster: false,
+        teleport: false,
+        catapult: false,
+        passage: false
+    })
+}
+
+function flyFromCore(
+    state: HydratedSolGameState,
+    player: HydratedSolPlayerState,
+    destination: { row: number; col: number },
+    pieces: { sundiverIds?: string[]; stationId?: string }
+) {
+    return new HydratedFly({
+        ...createActionBase(Fly, state),
+        playerId: player.playerId,
+        sundiverIds: pieces.sundiverIds ?? [],
+        stationId: pieces.stationId,
+        gates: [],
+        start: CORE_COORDS,
+        destination,
         cluster: false,
         teleport: false,
         catapult: false,
@@ -146,6 +168,28 @@ describe('Hurl', () => {
             expect(state.activeEffect).toBeUndefined()
             expect(hurl.metadata?.momentumGained).toBe(2)
             expect(hurl.metadata?.juggernaut?.id).toBe(station.id)
+        })
+
+        it('cannot fly a station onto the center instead of hurling it', () => {
+            const { state, player } = setupMovingPlayer()
+            const station = placeStationAtCore(state, player)
+            state.activeEffect = EffectType.Juggernaut
+
+            const fly = flyFromCore(state, player, CENTER_COORDS, { stationId: station.id })
+            expect(HydratedFly.isValidFlight(state, fly)).toBeUndefined()
+            expect(() => fly.apply(state)).toThrow()
+            expect(state.board.cellAt(CENTER_COORDS).station).toBeUndefined()
+            expect(state.board.findStation(station.id)?.coords).toEqual(CORE_COORDS)
+        })
+
+        it('can still fly a station to a normal cell while Juggernaut is active', () => {
+            const { state, player } = setupMovingPlayer()
+            const station = placeStationAtCore(state, player)
+            state.activeEffect = EffectType.Juggernaut
+
+            const destination = { row: Ring.Core, col: 1 }
+            const fly = flyFromCore(state, player, destination, { stationId: station.id })
+            expect(HydratedFly.isValidFlight(state, fly)).toBeDefined()
         })
     })
 })
